@@ -18,6 +18,9 @@ This project is a basic library management system built with Spring Boot. It is 
 ### JWT token management:
 - Token generation (`JwtTokenService`)
 - Token verification filter (`JWTTokenFilter`)
+### Exception handling:
+- Custom exceptions for different `entities` and `operations`
+- Global Exception Handler/Controller
 
 ## Notes
 This is just the beginning, and it will be gradually expanded with more features and improvements.
