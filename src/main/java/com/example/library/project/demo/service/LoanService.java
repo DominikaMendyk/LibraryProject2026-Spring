@@ -17,6 +17,7 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 public class LoanService {
@@ -92,15 +93,13 @@ public class LoanService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> LoanException.create("User not found"));
 
-        List<Loan> loans = loanRepository.findByUserAndReturnDateIsNull(user);
-        if (loans.isEmpty()) {
-            throw LoanException.create("No currently borrowed books");
-        }
-        return loans.stream()
+        return loanRepository.findByUserAndReturnDateIsNull(user)
+                .stream()
                 .map(loan -> new LoanHistoryDTO(
                         loan.getBook().getTitle(),
                         loan.getBook().getAuthor(),
                         loan.getBook().getPublisher(),
+                        loan.getUser().getUserId(),
                         loan.getLoanDate(),
                         null
                 ))
@@ -112,15 +111,13 @@ public class LoanService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> LoanException.create("User not found"));
 
-        List<Loan> loans = loanRepository.findByUser(user);
-        if (loans.isEmpty()) {
-            throw LoanException.create("No books were borrowed");
-        }
-        return loans.stream()
+        return loanRepository.findByUser(user)
+                .stream()
                 .map(loan -> new LoanHistoryDTO(
                         loan.getBook().getTitle(),
                         loan.getBook().getAuthor(),
                         loan.getBook().getPublisher(),
+                        loan.getUser().getUserId(),
                         loan.getLoanDate(),
                         loan.getReturnDate()
                 ))
@@ -155,4 +152,17 @@ public class LoanService {
                 .collect(Collectors.toList());
     }
 
+    public List<LoanHistoryDTO> getAllLoans() {
+        return StreamSupport
+                .stream(loanRepository.findAll().spliterator(), false)
+                .map(loan -> new LoanHistoryDTO(
+                        loan.getBook().getTitle(),
+                        loan.getBook().getAuthor(),
+                        loan.getBook().getPublisher(),
+                        loan.getUser().getUserId(),
+                        loan.getLoanDate(),
+                        loan.getReturnDate()
+                ))
+                .collect(Collectors.toList());
+    }
 }

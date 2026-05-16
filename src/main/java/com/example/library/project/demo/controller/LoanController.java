@@ -55,4 +55,9 @@ public class LoanController {
     public List<BookLoanDTO> getUsersPreviouslyBorrowedBook(@PathVariable String isbn) {
         return loanService.getUsersPreviouslyBorrowedBook(isbn);
     }
+
+    @GetMapping("/all")
+    public List<LoanHistoryDTO> getAllLoans() {
+        return loanService.getAllLoans();
+    }
 }
