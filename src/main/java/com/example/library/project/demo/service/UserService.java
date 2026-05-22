@@ -99,6 +99,7 @@ public class UserService {
                 .map(Object::toString)
                 .orElse("UNKNOWN");
         return new UserProfileDTO(
+                user.getUserId(),
                 user.getUsername(),
                 user.getEmail(),
                 user.getName(),
@@ -125,32 +126,37 @@ public class UserService {
     public User updateUser(String userId, User updatedUser) {
         return userRepository.findById(Integer.valueOf(userId))
                 .map(user -> {
-                    if (updatedUser.getEmail() != null &&
+                    if (updatedUser.getEmail() != null && !updatedUser.getEmail().isBlank() &&
                             !updatedUser.getEmail().equals(user.getEmail())) {
-
-                        Optional<User> existingUser =
-                                userRepository.findByEmail(updatedUser.getEmail());
-
-                        if (existingUser.isPresent() &&
-                                !Objects.equals(existingUser.get().getUserId(), user.getUserId())) {
+                        Optional<User> existingUserByEmail = userRepository.findByEmail(updatedUser.getEmail());
+                        if (existingUserByEmail.isPresent() &&
+                                !Objects.equals(existingUserByEmail.get().getUserId(), user.getUserId())) {
                             throw new RuntimeException("Email already in use");
                         }
-
                         user.setEmail(updatedUser.getEmail());
                     }
 
-                    user.setName(updatedUser.getName());
-                    user.setUsername(updatedUser.getUsername());
-                    user.setCredit(updatedUser.getCredit());
+                    if (updatedUser.getUsername() != null && !updatedUser.getUsername().isBlank() &&
+                            !updatedUser.getUsername().equals(user.getUsername())) {
+                        Optional<User> existingUserByUsername = userRepository.findByUsername(updatedUser.getUsername());
+                        if (existingUserByUsername.isPresent() &&
+                                !Objects.equals(existingUserByUsername.get().getUserId(), user.getUserId())) {
+                            throw new RuntimeException("Username already in use");
+                        }
+                        user.setUsername(updatedUser.getUsername());
+                    }
 
+                    if (updatedUser.getName() != null) {
+                        user.setName(updatedUser.getName());
+                    }
+                    if (updatedUser.getCredit() != null) {
+                        user.setCredit(updatedUser.getCredit());
+                    }
                     if (updatedUser.getPassword() != null && !updatedUser.getPassword().isBlank()) {
                         user.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
                     }
-
                     return userRepository.save(user);
                 })
-                .orElseThrow(() ->
-                        UserException.create("User not found, cannot be updated")
-                );
+                .orElseThrow(() -> UserException.create("User not found, cannot be updated"));
     }
 }

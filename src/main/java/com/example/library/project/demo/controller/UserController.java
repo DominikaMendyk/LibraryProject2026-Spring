@@ -13,11 +13,13 @@ import com.example.library.project.demo.service.UserService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
+import jakarta.servlet.http.HttpServletRequest;
 
 
 import java.util.List;
@@ -133,7 +135,31 @@ public class UserController {
     }
 
     @PutMapping("/update/{userId}")
-    public User updateUser(@PathVariable String userId, @RequestBody User updatedUser) {
-        return userService.updateUser(userId, updatedUser);
+    public ResponseEntity<?> updateUser(
+            @PathVariable String userId,
+            @RequestBody User updatedUser,
+            HttpServletRequest request
+    ) {
+        try {
+            String authHeader = request.getHeader("Authorization");
+            String token = authHeader.substring(7);
+            String role = jwtTokenService.extractRole(token);
+            Integer currentUserId = jwtTokenService.extractUserId(token);
+            boolean isLibrarian =
+                    role.equals("ROLE_LIBRARIAN");
+            boolean isOwnAccount =
+                    currentUserId.equals(Integer.valueOf(userId));
+            if (!isLibrarian && !isOwnAccount) {
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body("You cannot edit another user's account");
+            }
+            User savedUser = userService.updateUser(userId, updatedUser);
+            return ResponseEntity.ok(savedUser);
+        } catch (RuntimeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        }
     }
 }
