@@ -1,8 +1,10 @@
 package com.example.library.project.demo.service;
 
+import com.example.library.project.demo.entity.DTO.UpdateReviewDTO;
 import com.example.library.project.demo.entity.Review;
 import com.example.library.project.demo.exception.ReviewException;
 import com.example.library.project.demo.repository.ReviewRepository;
+import com.example.library.project.demo.security.JwtTokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,10 +16,15 @@ import java.util.Optional;
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final LoanService loanService;
+    private final JwtTokenService jwtTokenService;
 
     @Autowired
-    public ReviewService(ReviewRepository reviewRepository) {
+    public ReviewService(ReviewRepository reviewRepository,
+                         LoanService loanService, JwtTokenService jwtTokenService) {
         this.reviewRepository = reviewRepository;
+        this.loanService = loanService;
+        this.jwtTokenService = jwtTokenService;
     }
 
     @Transactional
@@ -25,15 +32,38 @@ public class ReviewService {
         if (review == null){
             throw ReviewException.create("Cannot add null review.");
         }
+        if (review.getBook() == null || review.getUser() == null) {
+            throw ReviewException.create("Review must contain a book and user.");
+        }
+        Integer bookId = review.getBook().getBookId();
+        Integer userId = review.getUser().getUserId();
+
+        boolean hasBorrowed =
+                loanService.hasActiveLoan(userId, bookId)
+                        || loanService.hasHistoryLoan(userId, bookId);
+
+        if (!hasBorrowed) {
+            throw ReviewException.create(
+                    "You can only review books you have borrowed."
+            );
+        }
+
+        boolean alreadyReviewed = reviewRepository
+                .findByBook_BookIdAndUser_UserId(bookId, userId)
+                .isPresent();
+
+        if (alreadyReviewed) {
+            throw ReviewException.create("You have already reviewed this book.");
+        }
         return reviewRepository.save(review);
     }
 
     public Iterable<Review> getAllReviews() {
-        Iterable<Review> reviews = reviewRepository.findAll();
-        if (!reviews.iterator().hasNext()){
-            throw ReviewException.create("No reviews found");
-        }
-        return reviews;
+        return reviewRepository.findAll();
+    }
+
+    public List<Review> getMyReviews(Integer userId) {
+        return reviewRepository.findByUser_UserId(userId);
     }
 
     public Review getReviewById(Integer reviewId) {
@@ -49,22 +79,15 @@ public class ReviewService {
     }
 
     @Transactional
-    public Review updateReview(Integer reviewId, Review updatedReview) {
-        if (updatedReview == null){
-            throw ReviewException.create("Updated review cannot be null");
-        }
-        return reviewRepository.findById(reviewId)
-                .map(review -> {
-                    review.setRating(updatedReview.getRating());
-                    review.setComment(updatedReview.getComment());
-                    review.setReviewDate(updatedReview.getReviewDate());
-                    review.setBook(updatedReview.getBook());
-                    review.setUser(updatedReview.getUser());
-                    return reviewRepository.save(review);
-                })
+    public Review updateReview(Integer reviewId, UpdateReviewDTO dto) {
+        Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> ReviewException.create("Review not found"));
+        review.setRating(dto.getRating());
+        review.setComment(dto.getComment());
+        return reviewRepository.save(review);
     }
 
+    /*
     public List<Review> getReviewsByBook(Integer bookId) {
         List<Review> reviews = reviewRepository.findByBook_BookId(bookId);
         if (reviews.isEmpty()){
@@ -72,6 +95,12 @@ public class ReviewService {
         }
         return reviews;
     }
+
+     */
+    public List<Review> getReviewsByBook(Integer bookId) {
+        return reviewRepository.findByBook_BookId(bookId);
+    }
+
 
     public List<Review> getReviewsByUser(Integer userId) {
         List<Review> reviews = reviewRepository.findByUser_UserId(userId);

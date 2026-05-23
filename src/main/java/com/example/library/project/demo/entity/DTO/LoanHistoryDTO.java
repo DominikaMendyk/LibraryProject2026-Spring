@@ -2,6 +2,8 @@ package com.example.library.project.demo.entity.DTO;
 import java.time.LocalDate;
 
 public class LoanHistoryDTO {
+    private Integer bookId;
+    private String isbn;
     private String title;
     private String author;
     private String publisher;
@@ -9,7 +11,9 @@ public class LoanHistoryDTO {
     private LocalDate loanDate;
     private LocalDate returnDate;
 
-    public LoanHistoryDTO(String title, String author, String publisher, Integer userId, LocalDate loanDate, LocalDate returnDate) {
+    public LoanHistoryDTO(Integer bookId, String isbn, String title, String author, String publisher, Integer userId, LocalDate loanDate, LocalDate returnDate) {
+        this.bookId = bookId;
+        this.isbn = isbn;
         this.title = title;
         this.author = author;
         this.publisher = publisher;
@@ -17,6 +21,8 @@ public class LoanHistoryDTO {
         this.loanDate = loanDate;
         this.returnDate = returnDate;
     }
+    public Integer getBookId() { return bookId; }
+    public String getIsbn() { return isbn; }
     public String getTitle() { return title; }
     public String getAuthor() { return author; }
     public String getPublisher() { return publisher; }

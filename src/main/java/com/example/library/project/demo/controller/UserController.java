@@ -100,20 +100,20 @@ public class UserController {
         return loanService.getPreviouslyBorrowedBooks(userId);
     }
 
-    @PostMapping("/borrow/{isbn}")
+    @PostMapping("/borrow/{bookId}")
     public Loan borrowBook(
-            @RequestParam String isbn, @RequestParam("Authorization") String authHeader){
+            @RequestParam Integer bookId, @RequestParam("Authorization") String authHeader){
         String token = authHeader.substring(7);
         Integer userId = jwtTokenService.extractUserId(token);
-        return loanService.borrowBook(userId, isbn);
+        return loanService.borrowBook(userId, bookId);
     }
 
-    @PostMapping("/return/{isbn}")
+    @PostMapping("/return/{bookId}")
     public Loan returnBook(
-            @RequestParam String isbn, @RequestParam("Authorization") String authHeader){
+            @RequestParam Integer bookId, @RequestParam("Authorization") String authHeader){
         String token = authHeader.substring(7);
         Integer userId = jwtTokenService.extractUserId(token);
-        return loanService.returnBook(userId, isbn);
+        return loanService.returnBook(userId, bookId);
     }
 
     @GetMapping("who-am-i")

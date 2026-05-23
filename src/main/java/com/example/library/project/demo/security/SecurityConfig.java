@@ -59,6 +59,7 @@ public class SecurityConfig {
                                         .requestMatchers("/book/remove/**").hasRole("LIBRARIAN")
                                         .requestMatchers("/book/details").hasRole("READER")
                                         .requestMatchers("/book/**").authenticated()
+                                        .requestMatchers("/review/**").hasAnyRole("LIBRARIAN", "READER")
                                         .requestMatchers("/test").hasRole("USER")
                                         .anyRequest().authenticated()
                 )

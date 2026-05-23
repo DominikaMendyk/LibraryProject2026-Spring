@@ -17,4 +17,13 @@ public interface LoanRepository extends CrudRepository<Loan,Integer> {
 
     List<Loan> findByBookAndReturnDateIsNull(Book book);
     List<Loan> findByBookAndReturnDateIsNotNull(Book book);
+    Optional<Loan> findFirstByBookAndUserAndReturnDateIsNullOrderByLoanDateAsc(Book book, User user);
+    boolean existsByBook_BookIdAndUser_UserIdAndReturnDateIsNull(
+            Integer bookId,
+            Integer userId
+    );
+    boolean existsByBook_BookIdAndUser_UserId(
+            Integer bookId,
+            Integer userId
+    );
 }

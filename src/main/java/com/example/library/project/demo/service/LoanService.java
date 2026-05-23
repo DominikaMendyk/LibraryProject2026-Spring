@@ -11,6 +11,8 @@ import com.example.library.project.demo.repository.LoanRepository;
 import com.example.library.project.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -33,11 +35,12 @@ public class LoanService {
         this.bookRepository = bookRepository;
     }
 
-    public Loan borrowBook(int userId, String isbn) {
+    @Transactional
+    public Loan borrowBook(Integer userId, Integer bookId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> LoanException.create("User not found"));
 
-        Book book = bookRepository.findByIsbn(isbn)
+        Book book = bookRepository.findByBookId(bookId)
                 .orElseThrow(() -> LoanException.create("Book not found"));
 
         if (book.getAvailableCopies() <= 0) {
@@ -46,6 +49,11 @@ public class LoanService {
         // User cannot borrow a book if they have a credit
         if (user.getCredit() > 0){
             throw LoanException.create("Cannot borrow a book with a positive credit");
+        }
+
+        // To check if it has been already borrowed
+        if (hasActiveLoan(userId, bookId)){
+            throw LoanException.create("Cannot borrow a currently borrowed book");
         } else {
             book.setAvailableCopies(book.getAvailableCopies() - 1);
             Loan loan = new Loan();
@@ -61,11 +69,13 @@ public class LoanService {
         }
     }
 
-    public Loan returnBook(int userId, String isbn) {
+    //default
+    @Transactional
+    public Loan returnBook(int userId, Integer bookId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> LoanException.create("User not found"));
 
-        Book book = bookRepository.findByIsbn(isbn)
+        Book book = bookRepository.findByBookId(bookId)
                 .orElseThrow(() -> LoanException.create("Book not found"));
 
         Loan loan = loanRepository
@@ -87,6 +97,46 @@ public class LoanService {
 
         return loanRepository.save(loan);
     }
+    /*
+        used for debugging
+    @Transactional
+    public Loan returnBook(int userId, String isbn) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> LoanException.create("User not found"));
+
+        Book book = bookRepository.findByIsbn(isbn)
+                .orElseThrow(() -> LoanException.create("Book not found"));
+
+        Loan loan = loanRepository
+                .findFirstByBookAndUserAndReturnDateIsNullOrderByLoanDateAsc(book, user)
+                .orElseThrow(() ->
+                        LoanException.create("Book was never borrowed or already returned"));
+
+        LocalDate currentDate = LocalDate.now();
+        LocalDate dueDate = loan.getDueDate().toLocalDate();
+
+        if (dueDate.isBefore(currentDate)) {
+
+            int daysOverdue =
+                    (int) Math.ceil(ChronoUnit.DAYS.between(dueDate, currentDate));
+
+            int credit = daysOverdue / 2;
+
+            user.updateCredit(credit);
+        }
+
+        loan.setReturnDate(currentDate);
+
+        book.setAvailableCopies(book.getAvailableCopies() + 1);
+
+        bookRepository.save(book);
+        userRepository.save(user);
+
+        return loanRepository.save(loan);
+    }
+
+     */
 
     // Find all currently borrowed books by a userId
     public List<LoanHistoryDTO> getCurrentlyBorrowedBooks(Integer userId) {
@@ -96,6 +146,8 @@ public class LoanService {
         return loanRepository.findByUserAndReturnDateIsNull(user)
                 .stream()
                 .map(loan -> new LoanHistoryDTO(
+                        loan.getBook().getBookId(),
+                        loan.getBook().getIsbn(),
                         loan.getBook().getTitle(),
                         loan.getBook().getAuthor(),
                         loan.getBook().getPublisher(),
@@ -114,6 +166,8 @@ public class LoanService {
         return loanRepository.findByUser(user)
                 .stream()
                 .map(loan -> new LoanHistoryDTO(
+                        loan.getBook().getBookId(),
+                        loan.getBook().getIsbn(),
                         loan.getBook().getTitle(),
                         loan.getBook().getAuthor(),
                         loan.getBook().getPublisher(),
@@ -124,9 +178,9 @@ public class LoanService {
                 .collect(Collectors.toList());
     }
 
-    // Find all users who have currently borrowed a book by its isbn
-    public List<BookLoanDTO> getUsersCurrentlyBorrowedBook(String isbn) {
-        Book book = bookRepository.findByIsbn(isbn)
+    // Find all users who have currently borrowed a book by its bookId
+    public List<BookLoanDTO> getUsersCurrentlyBorrowedBook(Integer bookId) {
+        Book book = bookRepository.findByBookId(bookId)
                 .orElseThrow(() -> LoanException.create("Book not found"));
         return loanRepository.findByBookAndReturnDateIsNull(book)
                 .stream()
@@ -138,9 +192,9 @@ public class LoanService {
                 .collect(Collectors.toList());
     }
 
-    // Find all users who have previously borrowed a book by its isbn
-    public List<BookLoanDTO> getUsersPreviouslyBorrowedBook(String isbn) {
-        Book book = bookRepository.findByIsbn(isbn)
+    // Find all users who have previously borrowed a book by its bookId
+    public List<BookLoanDTO> getUsersPreviouslyBorrowedBook(Integer bookId) {
+        Book book = bookRepository.findByBookId(bookId)
                 .orElseThrow(() -> LoanException.create("Book not found"));
         return loanRepository.findByBookAndReturnDateIsNotNull(book)
                 .stream()
@@ -156,6 +210,8 @@ public class LoanService {
         return StreamSupport
                 .stream(loanRepository.findAll().spliterator(), false)
                 .map(loan -> new LoanHistoryDTO(
+                        loan.getBook().getBookId(),
+                        loan.getBook().getIsbn(),
                         loan.getBook().getTitle(),
                         loan.getBook().getAuthor(),
                         loan.getBook().getPublisher(),
@@ -164,5 +220,40 @@ public class LoanService {
                         loan.getReturnDate()
                 ))
                 .collect(Collectors.toList());
+    }
+
+    public Boolean hasActiveLoan(Integer userId, Integer bookId) {
+        if (bookId == null || userId == null) {
+            return false;
+        }
+        Book book = bookRepository.findByBookId(bookId)
+                .orElseThrow(() -> new RuntimeException("Book not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<LoanHistoryDTO> currentlyBorrowedBooks = getCurrentlyBorrowedBooks(userId);
+        if (currentlyBorrowedBooks.isEmpty()){
+            return false;
+        }
+        return currentlyBorrowedBooks.stream()
+                .anyMatch(loan -> bookId.equals(loan.getBookId()));
+    }
+
+    // only previously borrowed books - not current
+    public Boolean hasHistoryLoan(Integer userId, Integer bookId) {
+        if (bookId == null || userId == null) {
+            return false;
+        }
+        Book book = bookRepository.findByBookId(bookId)
+                .orElseThrow(() -> new RuntimeException("Book not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<LoanHistoryDTO> previouslyBorrowedBooks = getPreviouslyBorrowedBooks(userId);
+        if (previouslyBorrowedBooks.isEmpty()){
+            return false;
+        }
+        return previouslyBorrowedBooks.stream()
+                .anyMatch(loan -> bookId.equals(loan.getBookId()));
     }
 }

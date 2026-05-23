@@ -1,8 +1,11 @@
 package com.example.library.project.demo.controller;
 
+import com.example.library.project.demo.entity.DTO.UpdateReviewDTO;
 import com.example.library.project.demo.entity.Review;
 import com.example.library.project.demo.exception.ReviewException;
+import com.example.library.project.demo.security.JwtTokenService;
 import com.example.library.project.demo.service.ReviewService;
+import io.jsonwebtoken.Jwt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -14,10 +17,12 @@ import java.util.List;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final JwtTokenService jwtTokenService;
 
     @Autowired
-    public ReviewController(ReviewService reviewService) {
+    public ReviewController(ReviewService reviewService, JwtTokenService jwtTokenService) {
         this.reviewService = reviewService;
+        this.jwtTokenService = jwtTokenService;
     }
 
     @PostMapping("/add")
@@ -26,9 +31,15 @@ public class ReviewController {
         return reviewService.addReview(review);
     }
 
-    @GetMapping("/getAll")
+    @GetMapping("/all")
     public Iterable<Review> getAllReviews() {
         return reviewService.getAllReviews();
+    }
+
+    @GetMapping("/my-reviews")
+    public List<Review> getMyReviews(@RequestHeader("Authorization") String token) {
+        Integer userId = jwtTokenService.extractUserId(token.replace("Bearer ", ""));
+        return reviewService.getMyReviews(userId);
     }
 
     @GetMapping("/{id}")
@@ -43,8 +54,8 @@ public class ReviewController {
     }
 
     @PutMapping("/update/{id}")
-    public Review updateReview(@PathVariable Integer id, @RequestBody Review review) {
-        return reviewService.updateReview(id, review);
+    public Review updateReview(@PathVariable Integer id, @RequestBody UpdateReviewDTO dto) {
+        return reviewService.updateReview(id, dto);
     }
 
     @GetMapping("/book/{bookId}")
