@@ -9,6 +9,7 @@ import com.example.library.project.demo.exception.LoanException;
 import com.example.library.project.demo.repository.BookRepository;
 import com.example.library.project.demo.repository.LoanRepository;
 import com.example.library.project.demo.repository.UserRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,12 +27,16 @@ public class LoanService {
 
     private final LoanRepository loanRepository;
     private final UserRepository userRepository;
+    // needs to be lazy to avoid cycles, but it's a bit ugly
+    private final UserService userService;
     private final BookRepository bookRepository;
 
+
     @Autowired
-    public LoanService(LoanRepository loanRepository, UserRepository userRepository, BookRepository bookRepository) {
+    public LoanService(LoanRepository loanRepository, UserRepository userRepository, @Lazy UserService userService, BookRepository bookRepository) {
         this.loanRepository = loanRepository;
         this.userRepository = userRepository;
+        this.userService = userService;
         this.bookRepository = bookRepository;
     }
 
@@ -47,7 +52,7 @@ public class LoanService {
             throw LoanException.create("No copies available");
         }
         // User cannot borrow a book if they have a credit
-        if (user.getCredit() > 0){
+        if (userService.getTotalCredit(userId) > 0){
             throw LoanException.create("Cannot borrow a book with a positive credit");
         }
 
@@ -143,7 +148,7 @@ public class LoanService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> LoanException.create("User not found"));
 
-        return loanRepository.findByUserAndReturnDateIsNull(user)
+        return loanRepository.findByUser_UserIdAndReturnDateIsNull(userId)
                 .stream()
                 .map(loan -> new LoanHistoryDTO(
                         loan.getBook().getBookId(),
@@ -163,7 +168,7 @@ public class LoanService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> LoanException.create("User not found"));
 
-        return loanRepository.findByUser(user)
+        return loanRepository.findByUser_UserIdAndReturnDateIsNotNull(userId)
                 .stream()
                 .map(loan -> new LoanHistoryDTO(
                         loan.getBook().getBookId(),

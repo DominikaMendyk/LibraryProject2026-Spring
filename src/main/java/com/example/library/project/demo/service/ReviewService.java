@@ -109,4 +109,12 @@ public class ReviewService {
         }
         return reviews;
     }
+
+    public Review getReviewByBookAndUser(Integer bookId, Integer userId) {
+        Review review = reviewRepository.findReviewByBook_BookIdAndUser_UserId(bookId, userId);
+        if (review == null){
+            throw ReviewException.create("User with ID " + userId + "did not write any reviews");
+        }
+        return review;
+    }
 }

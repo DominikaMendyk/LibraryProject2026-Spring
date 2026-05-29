@@ -67,4 +67,9 @@ public class ReviewController {
     public List<Review> getReviewsByUser(@PathVariable Integer userId) {
         return reviewService.getReviewsByUser(userId);
     }
+
+    @GetMapping("{userId}/{bookId}")
+    public Review getReviewByBookAndUser(@PathVariable Integer bookId, @PathVariable Integer userId){
+        return reviewService.getReviewByBookAndUser(bookId, userId);
+    }
 }

@@ -48,6 +48,14 @@ public class SecurityConfig {
                                         .requestMatchers("/user/add").hasRole("LIBRARIAN")
                                         .requestMatchers("/user/borrow/").hasRole("READER")
                                         .requestMatchers("/user/return/").hasRole("READER")
+                                        //later change all to "/smth/*/**.... for LIBRARIAN and "/smth/...." to READER
+                                        .requestMatchers("/user/*/accumulated-credit").hasRole("LIBRARIAN")
+                                        .requestMatchers("/user/*/active-overdue-credit").hasRole("LIBRARIAN")
+                                        .requestMatchers("/user/*/total-credit").hasRole("LIBRARIAN")
+                                        .requestMatchers("/user/my-accumulated-credit").hasRole("READER")
+                                        .requestMatchers("/user/my-active-overdue-credit").hasRole("READER")
+                                        .requestMatchers("/user/my-total-credit").hasRole("READER")
+
                                         .requestMatchers("/user/who-am-i").permitAll()
                                         .requestMatchers("/user/me").permitAll()
                                         .requestMatchers("/user/update-email").permitAll()
@@ -60,6 +68,8 @@ public class SecurityConfig {
                                         .requestMatchers("/book/details").hasRole("READER")
                                         .requestMatchers("/book/**").authenticated()
                                         .requestMatchers("/review/**").hasAnyRole("LIBRARIAN", "READER")
+                                        .requestMatchers("/loan/user/*/current").hasRole("READER")
+                                        .requestMatchers("/loan/user/*/history").hasRole("READER")
                                         .requestMatchers("/test").hasRole("USER")
                                         .anyRequest().authenticated()
                 )

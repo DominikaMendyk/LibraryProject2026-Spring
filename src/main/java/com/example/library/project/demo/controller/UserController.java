@@ -70,6 +70,42 @@ public class UserController {
         return userService.getUserById(userId);
     }
 
+    @GetMapping("/{userId}/accumulated-credit")
+    public Integer getAccumulatedCredit(@PathVariable Integer userId) {
+        return userService.getAccumulatedCredit(userId);
+    }
+
+    @GetMapping("/my-accumulated-credit")
+    public Integer getAccumulatedCredit(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.substring(7);
+        Integer userId = jwtTokenService.extractUserId(token);
+        return userService.getAccumulatedCredit(userId);
+    }
+
+    @GetMapping("/{userId}/active-overdue-credit")
+    public Integer getActiveOverdueCredit(@PathVariable Integer userId) {
+        return userService.getActiveOverdueCredit(userId);
+    }
+
+    @GetMapping("/my-active-overdue-credit")
+    public Integer getActiveOverdueCredit(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.substring(7);
+        Integer userId = jwtTokenService.extractUserId(token);
+        return userService.getActiveOverdueCredit(userId);
+    }
+
+    @GetMapping("/{userId}/total-credit")
+    public Integer getTotalCredit(@PathVariable Integer userId) {
+        return userService.getTotalCredit(userId);
+    }
+
+    @GetMapping("/my-total-credit")
+    public Integer getTotalCredit(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.substring(7);
+        Integer userId = jwtTokenService.extractUserId(token);
+        return userService.getTotalCredit(userId);
+    }
+
     @Transactional
     @PostMapping("/{userId}/repay-credit")
     public User repayCredit(@PathVariable Integer userId,
@@ -78,10 +114,28 @@ public class UserController {
     }
 
     @Transactional
+    @PostMapping("/repay-credit")
+    public User repayCredit(@RequestParam Integer pay,
+                            @RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.substring(7);
+        Integer userId = jwtTokenService.extractUserId(token);
+        return userService.repayCredit(userId, pay);
+    }
+
+    @Transactional
     @PostMapping("/{userId}/add-credit")
     public User addCredit(@PathVariable Integer userId,
                             @RequestParam Integer credit) {
         return userService.addCredit(userId, credit);
+    }
+
+    @Transactional
+    @PostMapping("/add-credit")
+    public User addCredit(@RequestParam Integer pay,
+                            @RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.substring(7);
+        Integer userId = jwtTokenService.extractUserId(token);
+        return userService.addCredit(userId, pay);
     }
 
     @GetMapping("/my-currently-borrowed")

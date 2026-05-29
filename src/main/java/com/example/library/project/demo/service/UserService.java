@@ -1,11 +1,11 @@
 package com.example.library.project.demo.service;
 
-import com.example.library.project.demo.entity.Book;
+import com.example.library.project.demo.entity.*;
+import com.example.library.project.demo.entity.DTO.LoanHistoryDTO;
 import com.example.library.project.demo.entity.DTO.UserProfileDTO;
-import com.example.library.project.demo.entity.Role;
-import com.example.library.project.demo.entity.User;
 import com.example.library.project.demo.exception.BookException;
 import com.example.library.project.demo.exception.UserException;
+import com.example.library.project.demo.repository.LoanRepository;
 import com.example.library.project.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,6 +14,9 @@ import org.springframework.security.core.Authentication;
 import com.example.library.project.demo.security.PasswordEncoderConfig;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -21,11 +24,13 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final LoanService loanService;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, LoanService loanService, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.loanService = loanService;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -64,6 +69,33 @@ public class UserService {
     public User getUserById(Integer userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> UserException.create("User not found"));
+    }
+
+    public Integer getAccumulatedCredit(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> UserException.create("User not found"));
+        return user.getCredit();
+    }
+
+    public Integer getActiveOverdueCredit(Integer userId) {
+        LocalDate currentDate = LocalDate.now();
+        List<LoanHistoryDTO> allLoansOfUser = loanService.getCurrentlyBorrowedBooks(userId);
+        int activeOverdueCredit = allLoansOfUser.stream()
+                .mapToInt(loan -> {
+                    LocalDate dueDate = loan.getLoanDate().plusDays(30);
+                    if (!currentDate.isAfter(dueDate)) {
+                        return 0;
+                    }
+                    int daysOverdue = (int)  Math.ceil(ChronoUnit.DAYS.between(dueDate, currentDate));
+                    return daysOverdue/2;
+                })
+                .sum();
+
+        return activeOverdueCredit;
+    }
+
+    public Integer getTotalCredit(Integer userId) {
+        return getAccumulatedCredit(userId) + getActiveOverdueCredit(userId);
     }
 
     @Transactional
