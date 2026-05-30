@@ -6,6 +6,7 @@ import com.example.library.project.demo.entity.DTO.UserProfileDTO;
 import com.example.library.project.demo.exception.BookException;
 import com.example.library.project.demo.exception.UserException;
 import com.example.library.project.demo.repository.LoanRepository;
+import com.example.library.project.demo.repository.ReviewRepository;
 import com.example.library.project.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,8 @@ import com.example.library.project.demo.security.PasswordEncoderConfig;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.chrono.ChronoLocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
@@ -24,13 +27,19 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final ReviewRepository reviewRepository;
     private final LoanService loanService;
+    private final LoanRepository loanRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserService(UserRepository userRepository, LoanService loanService, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, ReviewRepository reviewRepository,
+                       LoanService loanService, LoanRepository loanRepository,
+                       PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.reviewRepository = reviewRepository;
         this.loanService = loanService;
+        this.loanRepository = loanRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -48,14 +57,14 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteUser(Integer userId){
+    public String deleteUser(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> UserException.create("Cannot delete user: User not found"));
-        try {
-            userRepository.delete(user);
-        } catch (Exception e) {
-            throw UserException.create("Failed to delete user: " + e.getMessage());
-        }
+
+        reviewRepository.deleteByUser_UserId(userId);
+        loanRepository.deleteByUser_UserId(userId);
+        userRepository.delete(user);
+        return ("Successfully deleted user with id " + userId);
     }
 
     public Iterable<User> getAllUsers() {
@@ -82,7 +91,7 @@ public class UserService {
         List<LoanHistoryDTO> allLoansOfUser = loanService.getCurrentlyBorrowedBooks(userId);
         int activeOverdueCredit = allLoansOfUser.stream()
                 .mapToInt(loan -> {
-                    LocalDate dueDate = loan.getLoanDate().plusDays(30);
+                    LocalDate dueDate = loan.getDueDate().toLocalDate();
                     if (!currentDate.isAfter(dueDate)) {
                         return 0;
                     }

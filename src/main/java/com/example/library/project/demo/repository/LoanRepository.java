@@ -17,6 +17,7 @@ public interface LoanRepository extends CrudRepository<Loan,Integer> {
     List<Loan> findByUser(User user);
 
     List<Loan> findByBookAndReturnDateIsNull(Book book);
+    List<Loan> findByBook_BookIdAndReturnDateIsNull(Integer bookId);
     List<Loan> findByBookAndReturnDateIsNotNull(Book book);
     Optional<Loan> findFirstByBookAndUserAndReturnDateIsNullOrderByLoanDateAsc(Book book, User user);
     boolean existsByBook_BookIdAndUser_UserIdAndReturnDateIsNull(
@@ -27,4 +28,8 @@ public interface LoanRepository extends CrudRepository<Loan,Integer> {
             Integer bookId,
             Integer userId
     );
+
+    void deleteByBook_BookId(Integer bookId);
+
+    void deleteByUser_UserId(Integer userId);
 }

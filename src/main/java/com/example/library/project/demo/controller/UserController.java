@@ -1,12 +1,10 @@
 package com.example.library.project.demo.controller;
 
-import com.example.library.project.demo.entity.Book;
 import com.example.library.project.demo.entity.DTO.LoanHistoryDTO;
 import com.example.library.project.demo.entity.DTO.UserProfileDTO;
 import com.example.library.project.demo.entity.Loan;
 import com.example.library.project.demo.entity.Role;
 import com.example.library.project.demo.entity.User;
-import com.example.library.project.demo.repository.UserRepository;
 import com.example.library.project.demo.security.JwtTokenService;
 import com.example.library.project.demo.service.LoanService;
 import com.example.library.project.demo.service.UserService;
@@ -14,8 +12,6 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
@@ -51,8 +47,8 @@ public class UserController {
 
     @DeleteMapping("/remove/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@PathVariable Integer userId){
-        userService.deleteUser(userId);
+    public String deleteUser(@PathVariable Integer userId){
+        return userService.deleteUser(userId);
     }
 
     @GetMapping("/getAll")

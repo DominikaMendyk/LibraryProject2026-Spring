@@ -8,7 +8,12 @@ import java.util.Optional;
 @Repository
 public interface ReviewRepository extends CrudRepository<Review,Integer> {
     List<Review> findByBook_BookId(Integer bookId);
+    void deleteByBook_BookId(Integer bookId);
     List<Review> findByUser_UserId(Integer userId);
     Optional<Review> findByBook_BookIdAndUser_UserId(Integer bookId, Integer userId);
     Review findReviewByBook_BookIdAndUser_UserId(Integer bookId, Integer userId);
+
+    List<Review> getReviewByBook_BookId(Integer bookBookId);
+
+    void deleteByUser_UserId(Integer userId);
 }

@@ -2,6 +2,9 @@ package com.example.library.project.demo.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.util.Date;
 
 @Entity
@@ -13,6 +16,7 @@ public class Review {
 
     @ManyToOne
     @JoinColumn(name = "bookId", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Book book;
 
     @ManyToOne

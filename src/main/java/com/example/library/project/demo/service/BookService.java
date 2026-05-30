@@ -1,15 +1,21 @@
 package com.example.library.project.demo.service;
 
 import com.example.library.project.demo.entity.Book;
+import com.example.library.project.demo.entity.Loan;
+import com.example.library.project.demo.entity.Review;
 import com.example.library.project.demo.entity.User;
 import com.example.library.project.demo.exception.BookException;
 import com.example.library.project.demo.exception.LoginPasswordException;
 import com.example.library.project.demo.repository.BookRepository;
+import com.example.library.project.demo.repository.LoanRepository;
+import com.example.library.project.demo.repository.ReviewRepository;
+import com.example.library.project.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -17,10 +23,17 @@ import java.util.Optional;
 public class BookService {
 
     private final BookRepository bookRepository;
+    private final UserRepository userRepository;
+    private final LoanRepository loanRepository;
+    private final ReviewRepository reviewRepository;
 
     @Autowired
-    public BookService(BookRepository bookRepository) {
+    public BookService(BookRepository bookRepository, UserRepository userRepository,
+                       LoanRepository loanRepository, ReviewRepository reviewRepository) {
         this.bookRepository = bookRepository;
+        this.userRepository = userRepository;
+        this.loanRepository = loanRepository;
+        this.reviewRepository = reviewRepository;
     }
 
     @Transactional
@@ -50,6 +63,19 @@ public class BookService {
         Book book = bookRepository.findByIsbn(isbn)
                 .orElseThrow(() -> BookException.create("Cannot delete a book with this isbn." +
                         "There is none in the library with this isbn."));
+
+        int bookId = book.getBookId();
+        List<Loan> activeLoans = loanRepository.findByBook_BookIdAndReturnDateIsNull(bookId);
+        for (Loan loan : activeLoans) {
+            User user = loan.getUser();
+            if (user != null) {
+                // it's treated as if the user bought this book
+                user.setCredit(user.getCredit() + 100);
+                userRepository.save(user);
+            }
+        }
+        reviewRepository.deleteByBook_BookId(bookId);
+        loanRepository.deleteByBook_BookId(bookId);
         bookRepository.delete(book);
         return ("Successfully deleted book with isbn " + isbn);
     }
