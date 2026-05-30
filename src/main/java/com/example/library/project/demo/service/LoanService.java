@@ -158,6 +158,7 @@ public class LoanService {
                         loan.getBook().getPublisher(),
                         loan.getUser().getUserId(),
                         loan.getLoanDate(),
+                        loan.getDueDate(),
                         null
                 ))
                 .collect(Collectors.toList());
@@ -178,6 +179,7 @@ public class LoanService {
                         loan.getBook().getPublisher(),
                         loan.getUser().getUserId(),
                         loan.getLoanDate(),
+                        loan.getDueDate(),
                         loan.getReturnDate()
                 ))
                 .collect(Collectors.toList());
@@ -222,6 +224,7 @@ public class LoanService {
                         loan.getBook().getPublisher(),
                         loan.getUser().getUserId(),
                         loan.getLoanDate(),
+                        loan.getDueDate(),
                         loan.getReturnDate()
                 ))
                 .collect(Collectors.toList());

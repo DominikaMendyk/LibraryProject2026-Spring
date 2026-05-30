@@ -55,6 +55,7 @@ public class SecurityConfig {
                                         .requestMatchers("/user/my-accumulated-credit").hasRole("READER")
                                         .requestMatchers("/user/my-active-overdue-credit").hasRole("READER")
                                         .requestMatchers("/user/my-total-credit").hasRole("READER")
+                                        .requestMatchers("/user/repay-credit").hasRole("READER")
 
                                         .requestMatchers("/user/who-am-i").permitAll()
                                         .requestMatchers("/user/me").permitAll()

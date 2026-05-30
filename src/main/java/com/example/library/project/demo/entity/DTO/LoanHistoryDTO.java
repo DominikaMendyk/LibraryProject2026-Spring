@@ -1,5 +1,6 @@
 package com.example.library.project.demo.entity.DTO;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class LoanHistoryDTO {
     private Integer bookId;
@@ -9,9 +10,10 @@ public class LoanHistoryDTO {
     private String publisher;
     private Integer userId;
     private LocalDate loanDate;
+    private LocalDateTime dueDate;
     private LocalDate returnDate;
 
-    public LoanHistoryDTO(Integer bookId, String isbn, String title, String author, String publisher, Integer userId, LocalDate loanDate, LocalDate returnDate) {
+    public LoanHistoryDTO(Integer bookId, String isbn, String title, String author, String publisher, Integer userId, LocalDate loanDate, LocalDateTime dueDate, LocalDate returnDate) {
         this.bookId = bookId;
         this.isbn = isbn;
         this.title = title;
@@ -19,6 +21,7 @@ public class LoanHistoryDTO {
         this.publisher = publisher;
         this.userId = userId;
         this.loanDate = loanDate;
+        this.dueDate = dueDate;
         this.returnDate = returnDate;
     }
     public Integer getBookId() { return bookId; }
@@ -28,5 +31,6 @@ public class LoanHistoryDTO {
     public String getPublisher() { return publisher; }
     public Integer getUserId() { return userId; }
     public LocalDate getLoanDate() { return loanDate; }
+    public LocalDateTime getDueDate() { return dueDate; }
     public LocalDate getReturnDate() { return returnDate; }
 }
