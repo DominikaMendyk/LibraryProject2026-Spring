@@ -66,6 +66,11 @@ public class LoanController {
         return loanService.getAllLoans();
     }
 
+    @GetMapping("book/{bookId}")
+    public List<LoanHistoryDTO> getAllLoansForABook(@PathVariable Integer bookId) {
+        return loanService.getAllLoansForABook(bookId);
+    }
+
     @GetMapping("/status/{bookId}")
     public ResponseEntity<Boolean> hasCurrentlyBorrowed(
             @PathVariable Integer bookId,

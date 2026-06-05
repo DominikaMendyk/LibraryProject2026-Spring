@@ -230,6 +230,22 @@ public class LoanService {
                 .collect(Collectors.toList());
     }
 
+    public List<LoanHistoryDTO> getAllLoansForABook(Integer bookId) {
+        return loanRepository.findLoansByBook_BookId(bookId).stream()
+                .map(loan -> new LoanHistoryDTO(
+                        loan.getBook().getBookId(),
+                        loan.getBook().getIsbn(),
+                        loan.getBook().getTitle(),
+                        loan.getBook().getAuthor(),
+                        loan.getBook().getPublisher(),
+                        loan.getUser().getUserId(),
+                        loan.getLoanDate(),
+                        loan.getDueDate(),
+                        loan.getReturnDate()
+                ))
+                .collect(Collectors.toList());
+    }
+
     public Boolean hasActiveLoan(Integer userId, Integer bookId) {
         if (bookId == null || userId == null) {
             return false;
