@@ -34,4 +34,7 @@ public interface LoanRepository extends CrudRepository<Loan,Integer> {
     void deleteByUser_UserId(Integer userId);
 
     List<Loan> findLoansByBook_BookId(Integer bookId);
+
+
+    List<Loan> findAllByBookAndUserAndReturnDateIsNull(Book book, User user);
 }

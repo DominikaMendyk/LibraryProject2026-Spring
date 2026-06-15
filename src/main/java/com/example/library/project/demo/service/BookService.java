@@ -1,9 +1,6 @@
 package com.example.library.project.demo.service;
 
-import com.example.library.project.demo.entity.Book;
-import com.example.library.project.demo.entity.Loan;
-import com.example.library.project.demo.entity.Review;
-import com.example.library.project.demo.entity.User;
+import com.example.library.project.demo.entity.*;
 import com.example.library.project.demo.exception.BookException;
 import com.example.library.project.demo.exception.LoginPasswordException;
 import com.example.library.project.demo.repository.BookRepository;

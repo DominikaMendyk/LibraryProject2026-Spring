@@ -1,14 +1,14 @@
 package com.example.library.project.demo.service;
 
-import com.example.library.project.demo.entity.Book;
+import com.example.library.project.demo.entity.*;
 import com.example.library.project.demo.entity.DTO.BookLoanDTO;
 import com.example.library.project.demo.entity.DTO.LoanHistoryDTO;
-import com.example.library.project.demo.entity.Loan;
-import com.example.library.project.demo.entity.User;
 import com.example.library.project.demo.exception.LoanException;
 import com.example.library.project.demo.repository.BookRepository;
 import com.example.library.project.demo.repository.LoanRepository;
 import com.example.library.project.demo.repository.UserRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.Authentication;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,7 +41,7 @@ public class LoanService {
     }
 
     @Transactional
-    public Loan borrowBook(Integer userId, Integer bookId) {
+    public Loan borrowBook(Integer userId, Integer bookId, Role currentRole) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> LoanException.create("User not found"));
 
@@ -54,6 +54,10 @@ public class LoanService {
         // User cannot borrow a book if they have a credit
         if (userService.getTotalCredit(userId) > 0){
             throw LoanException.create("Cannot borrow a book with a positive credit");
+        }
+
+        if (book.getBookFormat().equals(BookFormat.PHYSICAL) && currentRole.equals(Role.READER)){
+            throw LoanException.create("Reader cannot borrow a physical book by themselves");
         }
 
         // To check if it has been already borrowed
@@ -76,7 +80,7 @@ public class LoanService {
 
     //default
     @Transactional
-    public Loan returnBook(int userId, Integer bookId) {
+    public Loan returnBook(int userId, Integer bookId, Role currentRole) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> LoanException.create("User not found"));
 
@@ -86,6 +90,10 @@ public class LoanService {
         Loan loan = loanRepository
                 .findByBookAndUserAndReturnDateIsNull(book, user)
                 .orElseThrow(() -> LoanException.create("Book was never borrowed or already returned"));
+
+        if (book.getBookFormat().equals(BookFormat.PHYSICAL) && currentRole.equals(Role.READER)){
+            throw LoanException.create("Reader cannot return a physical book by themselves");
+        }
 
         LocalDate currentDate = LocalDate.now();
         LocalDate dueDate = loan.getDueDate().toLocalDate();
@@ -156,6 +164,7 @@ public class LoanService {
                         loan.getBook().getTitle(),
                         loan.getBook().getAuthor(),
                         loan.getBook().getPublisher(),
+                        loan.getBook().getBookFormat(),
                         loan.getUser().getUserId(),
                         loan.getLoanDate(),
                         loan.getDueDate(),
@@ -177,6 +186,7 @@ public class LoanService {
                         loan.getBook().getTitle(),
                         loan.getBook().getAuthor(),
                         loan.getBook().getPublisher(),
+                        loan.getBook().getBookFormat(),
                         loan.getUser().getUserId(),
                         loan.getLoanDate(),
                         loan.getDueDate(),
@@ -222,6 +232,7 @@ public class LoanService {
                         loan.getBook().getTitle(),
                         loan.getBook().getAuthor(),
                         loan.getBook().getPublisher(),
+                        loan.getBook().getBookFormat(),
                         loan.getUser().getUserId(),
                         loan.getLoanDate(),
                         loan.getDueDate(),
@@ -238,6 +249,7 @@ public class LoanService {
                         loan.getBook().getTitle(),
                         loan.getBook().getAuthor(),
                         loan.getBook().getPublisher(),
+                        loan.getBook().getBookFormat(),
                         loan.getUser().getUserId(),
                         loan.getLoanDate(),
                         loan.getDueDate(),

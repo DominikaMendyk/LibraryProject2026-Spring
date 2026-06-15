@@ -155,7 +155,9 @@ public class UserController {
             @RequestParam Integer bookId, @RequestParam("Authorization") String authHeader){
         String token = authHeader.substring(7);
         Integer userId = jwtTokenService.extractUserId(token);
-        return loanService.borrowBook(userId, bookId);
+        String roleStr = jwtTokenService.extractRole(token);
+        Role currentRole = Role.valueOf(roleStr.replace("ROLE_", ""));
+        return loanService.borrowBook(userId, bookId, currentRole);
     }
 
     @PostMapping("/return/{bookId}")
@@ -163,7 +165,9 @@ public class UserController {
             @RequestParam Integer bookId, @RequestParam("Authorization") String authHeader){
         String token = authHeader.substring(7);
         Integer userId = jwtTokenService.extractUserId(token);
-        return loanService.returnBook(userId, bookId);
+        String roleStr = jwtTokenService.extractRole(token);
+        Role currentRole = Role.valueOf(roleStr.replace("ROLE_", ""));
+        return loanService.returnBook(userId, bookId, currentRole);
     }
 
     @GetMapping("who-am-i")

@@ -26,6 +26,10 @@ public class Book {
     @Column(nullable=false)
     private Integer availableCopies;
 
+    @Column(nullable = true)
+    @Enumerated(EnumType.STRING)
+    private BookFormat bookFormat;
+
     public Integer getBookId() {
         return bookId;
     }
@@ -80,5 +84,13 @@ public class Book {
 
     public void setAvailableCopies(Integer availableCopies) {
         this.availableCopies = availableCopies;
+    }
+
+    public BookFormat getBookFormat(){
+        return bookFormat;
+    }
+
+    public void setBookFormat(BookFormat bookFormat){
+        this.bookFormat = bookFormat;
     }
 }

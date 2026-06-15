@@ -4,6 +4,7 @@ import com.example.library.project.demo.entity.Book;
 import com.example.library.project.demo.entity.DTO.BookLoanDTO;
 import com.example.library.project.demo.entity.DTO.LoanHistoryDTO;
 import com.example.library.project.demo.entity.Loan;
+import com.example.library.project.demo.entity.Role;
 import com.example.library.project.demo.entity.User;
 import com.example.library.project.demo.security.JwtTokenService;
 import com.example.library.project.demo.service.LoanService;
@@ -11,6 +12,8 @@ import io.jsonwebtoken.Jwt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,14 +34,22 @@ public class LoanController {
     @PostMapping("/borrow")
     @ResponseStatus(HttpStatus.CREATED)
     public Loan borrowBook(@RequestParam Integer userId,
-                           @RequestParam Integer bookId) {
-        return loanService.borrowBook(userId, bookId);
+                           @RequestParam Integer bookId,
+                           @RequestHeader("Authorization") String bearerToken) {
+        String token = bearerToken.substring(7);
+        String roleStr = jwtTokenService.extractRole(token);
+        Role currentRole = Role.valueOf(roleStr.replace("ROLE_", ""));
+        return loanService.borrowBook(userId, bookId, currentRole);
     }
 
     @PostMapping("/return")
     public Loan returnBook(@RequestParam Integer userId,
-                           @RequestParam Integer bookId) {
-        return loanService.returnBook(userId, bookId);
+                           @RequestParam Integer bookId,
+                           @RequestHeader("Authorization") String bearerToken) {
+        String token = bearerToken.substring(7);
+        String roleStr = jwtTokenService.extractRole(token);
+        Role currentRole = Role.valueOf(roleStr.replace("ROLE_", ""));
+        return loanService.returnBook(userId, bookId, currentRole);
     }
 
     @GetMapping("/user/{userId}/current")

@@ -12,4 +12,5 @@ public interface BookRepository extends CrudRepository<Book,Integer> {
     Optional<Book> findByIsbn(String isbn);
     Optional<Book> findByBookId(Integer bookId);
     void deleteByIsbn(String isbn);
+    List<Book> findAll();
 }
